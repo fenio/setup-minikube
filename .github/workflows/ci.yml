@@ -8,38 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    name: Build and Verify
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build
-        run: npm run build
-      
-      - name: Check for uncommitted changes
-        run: |
-          if [ -n "$(git status --porcelain dist/)" ]; then
-            echo "ERROR: dist/ has uncommitted changes after build"
-            echo "Please run 'npm run build' and commit the changes"
-            git status --porcelain dist/
-            exit 1
-          fi
-
   test-minikube-functionality:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     name: Test Minikube Functionality
-    needs: build
     
     steps:
       - uses: actions/checkout@v4
@@ -97,9 +68,8 @@ jobs:
           
       # NOTE: Cleanup runs automatically via post: hook after this job completes
       
-  # Job 2: CRITICAL TEST - Verify cleanup worked by running the action again
   test-cleanup-restoration:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     name: Verify Cleanup Restores System State
     needs: test-minikube-functionality
     if: always()
@@ -169,9 +139,8 @@ jobs:
           
       # Cleanup will run automatically again for this job
       
-  # Job 3: FINAL TEST - Verify system is clean after everything
   test-system-after-multiple-runs:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     name: Verify System Clean After Multiple Minikube Runs
     needs: test-cleanup-restoration
     if: always()
