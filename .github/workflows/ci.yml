@@ -33,7 +33,7 @@ jobs:
           version: 'stable'
           kubernetes-version: 'stable'
           wait-for-ready: 'true'
-          timeout: '300'
+          timeout: '120'
       
       - name: Verify Minikube is installed and running
         run: |
@@ -124,7 +124,7 @@ jobs:
         with:
           version: 'stable'
           kubernetes-version: 'stable'
-          timeout: '300'
+          timeout: '120'
         
       - name: Verify second minikube instance works
         env:
