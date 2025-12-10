@@ -5,11 +5,11 @@ A GitHub Action for installing and configuring [Minikube](https://minikube.sigs.
 ## Features
 
 - ✅ Automatic installation of Minikube
-- ✅ Support for multiple drivers (docker, podman, virtualbox, etc.)
+- ✅ Support for multiple drivers (docker, podman, none)
 - ✅ Configurable Kubernetes version
 - ✅ Waits for cluster readiness
 - ✅ Outputs kubeconfig path for easy integration
-- ✅ **Automatic cleanup** - Deletes the cluster after your workflow completes
+- ✅ **Simple bash-based implementation** - No Node.js dependencies required
 
 ## Quick Start
 
@@ -32,17 +32,15 @@ jobs:
         run: |
           kubectl apply -f k8s/
           kubectl wait --for=condition=available --timeout=60s deployment/my-app
-      
-      # Cleanup happens automatically after this job completes!
 ```
 
 ## Inputs
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `version` | Minikube version to install (e.g., `v1.32.0`) or `latest` | `latest` |
-| `kubernetes-version` | Kubernetes version to use (e.g., `v1.28.0`) or `stable` | `stable` |
-| `driver` | VM driver to use (docker, podman, virtualbox, kvm2, etc.) | `docker` |
+| `version` | Minikube version to install (e.g., `v1.32.0`, `latest`, or `stable`) | `stable` |
+| `kubernetes-version` | Kubernetes version to use (e.g., `v1.28.0`, `stable`, or `latest`) | `stable` |
+| `driver` | VM driver to use (docker, podman, none) | `docker` |
 | `wait-for-ready` | Wait for cluster to be ready before completing | `true` |
 | `timeout` | Timeout in seconds to wait for cluster readiness | `300` |
 
@@ -90,18 +88,23 @@ jobs:
 
 ## How It Works
 
-### Setup Phase
-1. Installs the Minikube binary for your platform
-2. Starts a Minikube cluster with the specified driver and Kubernetes version
-3. Configures kubectl to use the Minikube cluster
-4. Waits for the cluster to become ready (if `wait-for-ready` is enabled)
+1. Detects your platform (Linux/macOS) and architecture
+2. Downloads the Minikube binary from official sources
+3. Installs Minikube to `/usr/local/bin`
+4. Starts a Minikube cluster with the specified driver and Kubernetes version
+5. Exports the KUBECONFIG environment variable
+6. Optionally waits for the cluster to become fully ready
 
-### Automatic Cleanup (Post-run)
-After your workflow steps complete (whether successful or failed), the action automatically:
-1. Deletes the Minikube cluster using `minikube delete`
-2. Cleans up all cluster resources
+The cluster remains running after your workflow completes. This works perfectly for:
+- GitHub-hosted runners (fresh VM each time)
+- Self-hosted runners where you want the cluster to persist
 
-This is achieved using GitHub Actions' `post:` hook, similar to how `actions/checkout` cleans up after itself.
+If you need cleanup, you can add it explicitly:
+```yaml
+- name: Cleanup
+  if: always()
+  run: minikube delete --all --purge
+```
 
 ## Requirements
 
@@ -135,16 +138,7 @@ If you encounter issues with the Docker driver, try using a different driver:
 
 ## Development
 
-This action is written in TypeScript and compiled to JavaScript using `@vercel/ncc`.
-
-### Building
-
-```bash
-npm install
-npm run build
-```
-
-The compiled output in `dist/` must be committed to the repository for the action to work.
+This action is written in pure bash and requires no build step. Just edit `setup.sh` and test!
 
 ## License
 
