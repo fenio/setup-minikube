@@ -22,6 +22,11 @@ inputs:
     required: false
     default: 'docker'
   
+  container-runtime:
+    description: 'Container runtime to use (docker, containerd, cri-o)'
+    required: false
+    default: ''
+  
   wait-for-ready:
     description: 'Wait for minikube cluster to be ready before completing'
     required: false
@@ -48,5 +53,6 @@ runs:
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
         INPUT_DRIVER: ${{ inputs.driver }}
+        INPUT_CONTAINER_RUNTIME: ${{ inputs.container-runtime }}
         INPUT_WAIT_FOR_READY: ${{ inputs.wait-for-ready }}
         INPUT_TIMEOUT: ${{ inputs.timeout }}

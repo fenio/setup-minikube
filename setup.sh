@@ -7,10 +7,15 @@ echo "Starting Minikube setup..."
 VERSION="${INPUT_VERSION:-stable}"
 KUBERNETES_VERSION="${INPUT_KUBERNETES_VERSION:-stable}"
 DRIVER="${INPUT_DRIVER:-docker}"
+CONTAINER_RUNTIME="${INPUT_CONTAINER_RUNTIME:-}"
 WAIT_FOR_READY="${INPUT_WAIT_FOR_READY:-true}"
 TIMEOUT="${INPUT_TIMEOUT:-300}"
 
-echo "Configuration: version=$VERSION, kubernetes-version=$KUBERNETES_VERSION, driver=$DRIVER, wait-for-ready=$WAIT_FOR_READY, timeout=${TIMEOUT}s"
+if [ -n "$CONTAINER_RUNTIME" ]; then
+  echo "Configuration: version=$VERSION, kubernetes-version=$KUBERNETES_VERSION, driver=$DRIVER, container-runtime=$CONTAINER_RUNTIME, wait-for-ready=$WAIT_FOR_READY, timeout=${TIMEOUT}s"
+else
+  echo "Configuration: version=$VERSION, kubernetes-version=$KUBERNETES_VERSION, driver=$DRIVER, wait-for-ready=$WAIT_FOR_READY, timeout=${TIMEOUT}s"
+fi
 
 # Detect platform and architecture
 PLATFORM=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -53,11 +58,18 @@ echo "Verifying installation..."
 minikube version
 
 # Start minikube
-echo "Starting Minikube cluster with driver=$DRIVER, kubernetes-version=$KUBERNETES_VERSION..."
+if [ -n "$CONTAINER_RUNTIME" ]; then
+  echo "Starting Minikube cluster with driver=$DRIVER, kubernetes-version=$KUBERNETES_VERSION, container-runtime=$CONTAINER_RUNTIME..."
+else
+  echo "Starting Minikube cluster with driver=$DRIVER, kubernetes-version=$KUBERNETES_VERSION..."
+fi
 
 START_ARGS="start --driver=$DRIVER"
 if [ "$KUBERNETES_VERSION" != "stable" ]; then
   START_ARGS="$START_ARGS --kubernetes-version=$KUBERNETES_VERSION"
+fi
+if [ -n "$CONTAINER_RUNTIME" ]; then
+  START_ARGS="$START_ARGS --container-runtime=$CONTAINER_RUNTIME"
 fi
 
 # shellcheck disable=SC2086
