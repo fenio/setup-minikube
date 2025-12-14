@@ -26,7 +26,7 @@ jobs:
       
       - name: Setup Minikube
         id: minikube
-        uses: fenio/setup-minikube@v1
+        uses: fenio/setup-minikube@v5
       
       - name: Deploy and test
         run: |
@@ -41,8 +41,10 @@ jobs:
 | `version` | Minikube version to install (e.g., `v1.32.0`, `latest`, or `stable`) | `stable` |
 | `kubernetes-version` | Kubernetes version to use (e.g., `v1.28.0`, `stable`, or `latest`) | `stable` |
 | `driver` | VM driver to use (docker, podman, none) | `docker` |
+| `container-runtime` | Container runtime to use (docker, containerd, cri-o) | _(driver default)_ |
 | `wait-for-ready` | Wait for cluster to be ready before completing | `true` |
-| `timeout` | Timeout in seconds to wait for cluster readiness | `300` |
+| `timeout` | Timeout in seconds to wait for cluster readiness | `120` |
+| `dns-readiness` | Wait for CoreDNS to be ready and verify DNS resolution works | `true` |
 
 ## Outputs
 
