@@ -124,9 +124,17 @@ if [ "$WAIT_FOR_READY" = "true" ]; then
           # Check if core pods are running
           if ! kubectl get pods -n kube-system --no-headers 2>/dev/null | grep -v "Running\|Completed" > /dev/null; then
             echo "All kube-system pods are running"
-            echo "✓ Minikube cluster is fully ready!"
-            echo "::endgroup::"
-            break
+            
+            # Check if all pods are fully ready (not just Running, but all containers ready)
+            NOT_READY=$(kubectl get pods -n kube-system --no-headers 2>/dev/null | grep -v "Completed" | awk '$2 !~ /^([0-9]+)\/\1$/ {print $1}')
+            if [ -z "$NOT_READY" ]; then
+              echo "All kube-system pods are fully ready"
+              echo "✓ Minikube cluster is fully ready!"
+              echo "::endgroup::"
+              break
+            else
+              echo "Some kube-system pods not fully ready yet: $NOT_READY"
+            fi
           else
             echo "Some kube-system pods not running yet"
           fi
