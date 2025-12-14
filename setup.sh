@@ -112,35 +112,35 @@ if [ "$WAIT_FOR_READY" = "true" ]; then
     
     # Check if cluster is ready
     if minikube status > /dev/null 2>&1; then
-      echo "  Minikube is running"
+      echo "Minikube is running"
       
       if kubectl cluster-info > /dev/null 2>&1; then
-        echo "  kubectl can connect to API server"
+        echo "kubectl can connect to API server"
         
         # Check if all nodes are Ready
         if ! kubectl get nodes --no-headers 2>/dev/null | grep -v " Ready " > /dev/null; then
-          echo "  All nodes are Ready"
+          echo "All nodes are Ready"
           
           # Check if core pods are running
           if ! kubectl get pods -n kube-system --no-headers 2>/dev/null | grep -v "Running\|Completed" > /dev/null; then
-            echo "  All kube-system pods are running"
+            echo "All kube-system pods are running"
             echo "✓ Minikube cluster is fully ready!"
             echo "::endgroup::"
             break
           else
-            echo "  Some kube-system pods not running yet"
+            echo "Some kube-system pods not running yet"
           fi
         else
-          echo "  Some nodes not Ready yet"
+          echo "Some nodes not Ready yet"
         fi
       else
-        echo "  kubectl cannot connect yet"
+        echo "kubectl cannot connect yet"
       fi
     else
-      echo "  Minikube not running yet"
+      echo "Minikube not running yet"
     fi
     
-    echo "  Cluster not ready yet, waiting... ($ELAPSED/${TIMEOUT}s)"
+    echo "Cluster not ready yet, waiting... (${ELAPSED}/${TIMEOUT}s)"
     sleep 5
   done
 fi
