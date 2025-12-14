@@ -48,7 +48,6 @@ runs:
     - name: Setup Minikube
       id: setup
       shell: bash
-      run: ${{ github.action_path }}/setup.sh
       env:
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
@@ -56,3 +55,4 @@ runs:
         INPUT_CONTAINER_RUNTIME: ${{ inputs.container-runtime }}
         INPUT_WAIT_FOR_READY: ${{ inputs.wait-for-ready }}
         INPUT_TIMEOUT: ${{ inputs.timeout }}
+      run: ${{ github.action_path }}/setup.sh

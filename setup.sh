@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
+echo "::group::Installing Minikube"
 echo "Starting Minikube setup..."
 
 # Get inputs
@@ -32,7 +33,7 @@ case $ARCH in
     BINARY_ARCH="arm"
     ;;
   *)
-    echo "Error: Unsupported architecture: $ARCH"
+    echo "::error::Unsupported architecture: $ARCH"
     exit 1
     ;;
 esac
@@ -75,6 +76,9 @@ fi
 # shellcheck disable=SC2086
 minikube $START_ARGS
 
+echo "✓ Minikube installed and started"
+echo "::endgroup::"
+
 # Set kubeconfig output
 KUBECONFIG_PATH="$HOME/.kube/config"
 echo "kubeconfig=$KUBECONFIG_PATH" >> "$GITHUB_OUTPUT"
@@ -83,6 +87,7 @@ echo "KUBECONFIG exported: $KUBECONFIG_PATH"
 
 # Wait for cluster ready if requested
 if [ "$WAIT_FOR_READY" = "true" ]; then
+  echo "::group::Waiting for cluster ready"
   echo "Waiting for Minikube cluster to be ready (timeout: ${TIMEOUT}s)..."
   
   START_TIME=$(date +%s)
@@ -91,7 +96,7 @@ if [ "$WAIT_FOR_READY" = "true" ]; then
     ELAPSED=$(($(date +%s) - START_TIME))
     
     if [ "$ELAPSED" -gt "$TIMEOUT" ]; then
-      echo "Error: Timeout waiting for cluster to be ready"
+      echo "::error::Timeout waiting for cluster to be ready"
       echo "=== Minikube Status ==="
       minikube status || true
       echo "=== Minikube Logs ==="
@@ -120,6 +125,7 @@ if [ "$WAIT_FOR_READY" = "true" ]; then
           if ! kubectl get pods -n kube-system --no-headers 2>/dev/null | grep -v "Running\|Completed" > /dev/null; then
             echo "  All kube-system pods are running"
             echo "✓ Minikube cluster is fully ready!"
+            echo "::endgroup::"
             break
           else
             echo "  Some kube-system pods not running yet"
