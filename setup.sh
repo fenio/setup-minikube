@@ -162,12 +162,12 @@ if [ "$DNS_READINESS" = "true" ]; then
   
   # Wait for CoreDNS pods to be ready
   echo "Waiting for CoreDNS to be ready..."
-  kubectl wait --for=condition=ready --timeout=120s pod -l k8s-app=kube-dns -n kube-system
+  kubectl wait --for=condition=ready --timeout=240s pod -l k8s-app=kube-dns -n kube-system
   echo "✓ CoreDNS is ready"
   
   # Create a test pod and verify DNS resolution
   kubectl run dns-test --image=busybox:stable --restart=Never -- sleep 300
-  kubectl wait --for=condition=ready --timeout=60s pod/dns-test
+  kubectl wait --for=condition=ready --timeout=120s pod/dns-test
   
   if kubectl exec dns-test -- nslookup kubernetes.default.svc.cluster.local; then
     echo "✓ DNS resolution is working"
