@@ -2,22 +2,23 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  test-minikube-functionality:
+  test:
     runs-on: ubuntu-latest
-    name: Test Minikube Functionality
-    
+    name: Test Minikube
+
     steps:
-      - uses: actions/checkout@v6
-      
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Check initial state
         run: |
-          echo "=== Checking Initial System State ==="
+          echo "=== Checking initial system state ==="
           # Note: ubuntu-latest comes with minikube pre-installed at /usr/local/bin/minikube
           # Our action installs to ~/.local/bin/minikube which takes priority via PATH
           if [ -f ~/.local/bin/minikube ]; then
@@ -25,59 +26,55 @@ jobs:
             exit 1
           fi
           echo "✓ No custom minikube binary in ~/.local/bin"
-          
+
       - name: Setup Minikube
-        id: minikube
+        id: setup
         uses: ./
         with:
           version: 'stable'
           kubernetes-version: 'stable'
           wait-for-ready: 'true'
           timeout: '120'
-      
-      - name: Verify Minikube is installed and running
+
+      - name: Verify installation
         run: |
-          echo "=== Verifying Minikube Installation ==="
-          which minikube && echo "✓ minikube binary found at $(which minikube)" || (echo "✗ minikube binary not found" && exit 1)
-          minikube status && echo "✓ minikube cluster is running" || (echo "✗ minikube not running" && exit 1)
-      
+          echo "=== Verifying installation ==="
+          command -v minikube && echo "✓ minikube binary found" || { echo "✗ minikube binary not found"; exit 1; }
+          minikube status && echo "✓ minikube cluster is running" || { echo "✗ minikube not running"; exit 1; }
+
       - name: Test kubectl access
         env:
-          KUBECONFIG: ${{ steps.minikube.outputs.kubeconfig }}
+          KUBECONFIG: ${{ steps.setup.outputs.kubeconfig }}
         run: |
-          echo "=== Testing Kubernetes Functionality ==="
+          echo "=== Testing kubectl access ==="
           kubectl version --client
           kubectl cluster-info
           kubectl get nodes -o wide
           kubectl get pods -A
-          
+
       - name: Deploy test workload
         env:
-          KUBECONFIG: ${{ steps.minikube.outputs.kubeconfig }}
+          KUBECONFIG: ${{ steps.setup.outputs.kubeconfig }}
         run: |
-          echo "=== Deploying Test Workload ==="
-          
+          echo "=== Deploying test workload ==="
           kubectl create deployment nginx --image=nginx:alpine
           kubectl expose deployment nginx --port=80 --type=ClusterIP
           kubectl wait --for=condition=available --timeout=120s deployment/nginx
-          
-          # Test connectivity
+
           POD_NAME=$(kubectl get pod -l app=nginx -o jsonpath='{.items[0].metadata.name}')
-          kubectl exec $POD_NAME -- wget -O- http://localhost:80 | grep -q "Welcome to nginx"
+          kubectl exec "$POD_NAME" -- wget -O- http://localhost:80 | grep -q "Welcome to nginx"
           echo "✓ Workload is functioning correctly"
-      
-      - name: Test internet connectivity from pod
+
+      - name: Test pod networking
         env:
-          KUBECONFIG: ${{ steps.minikube.outputs.kubeconfig }}
+          KUBECONFIG: ${{ steps.setup.outputs.kubeconfig }}
         run: |
-          echo "=== Testing Internet Connectivity from Pod ==="
-          
+          echo "=== Testing pod networking ==="
           kubectl run connectivity-test --image=busybox:stable --restart=Never -- sleep 300
           kubectl wait --for=condition=ready --timeout=60s pod/connectivity-test
-          
-          # Test DNS resolution and external connectivity
+
           kubectl exec connectivity-test -- nslookup google.com
           kubectl exec connectivity-test -- wget -q -O- --timeout=10 http://ifconfig.me && echo ""
-          echo "✓ Internet connectivity from pod is working"
-          
+          echo "✓ Pod networking is working"
+
           kubectl delete pod connectivity-test --ignore-not-found
