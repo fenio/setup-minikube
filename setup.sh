@@ -78,6 +78,31 @@ fi
 # See: https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters
 # See: https://github.com/kubernetes/minikube/issues/3511
 if [ "$DRIVER" = "none" ]; then
+  echo "::group::Configuring network for none driver"
+  
+  # Enable IP forwarding (required for pod networking)
+  echo "Enabling IP forwarding..."
+  sudo sysctl -w net.ipv4.ip_forward=1
+  sudo sysctl -w net.ipv6.conf.all.forwarding=1 2>/dev/null || true
+  
+  # Set iptables FORWARD policy to ACCEPT
+  echo "Configuring iptables..."
+  sudo iptables -P FORWARD ACCEPT
+  
+  # Load br_netfilter module for bridge networking
+  if ! lsmod | grep -q br_netfilter; then
+    echo "Loading br_netfilter module..."
+    sudo modprobe br_netfilter || echo "::warning::Failed to load br_netfilter module"
+  fi
+  
+  # Enable bridge netfilter for proper pod-to-service communication
+  if [ -f /proc/sys/net/bridge/bridge-nf-call-iptables ]; then
+    sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
+    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=1 2>/dev/null || true
+  fi
+  
+  echo "::endgroup::"
+  
   if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
     echo "Detected systemd-resolved, configuring kubelet to use real resolv.conf..."
     if [ -f /run/systemd/resolve/resolv.conf ]; then
@@ -87,6 +112,9 @@ if [ "$DRIVER" = "none" ]; then
       echo "::warning::systemd-resolved is active but /run/systemd/resolve/resolv.conf not found"
     fi
   fi
+  
+  # Use CNI for networking instead of the default bridge
+  START_ARGS="$START_ARGS --cni=bridge"
 fi
 
 # shellcheck disable=SC2086
