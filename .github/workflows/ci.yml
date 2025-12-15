@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test Minikube
+    name: Test
 
     steps:
       - name: Checkout
@@ -22,12 +22,12 @@ jobs:
           # Note: ubuntu-latest comes with minikube pre-installed at /usr/local/bin/minikube
           # Our action installs to ~/.local/bin/minikube which takes priority via PATH
           if [ -f ~/.local/bin/minikube ]; then
-            echo "✗ Custom minikube already exists at ~/.local/bin/minikube"
+            echo "ERROR: Custom minikube already exists at ~/.local/bin/minikube"
             exit 1
           fi
-          echo "✓ No custom minikube binary in ~/.local/bin"
+          echo "OK: No custom minikube binary in ~/.local/bin"
 
-      - name: Setup Minikube
+      - name: Setup cluster
         id: setup
         uses: ./
         with:
@@ -39,8 +39,8 @@ jobs:
       - name: Verify installation
         run: |
           echo "=== Verifying installation ==="
-          command -v minikube && echo "✓ minikube binary found" || { echo "✗ minikube binary not found"; exit 1; }
-          minikube status && echo "✓ minikube cluster is running" || { echo "✗ minikube not running"; exit 1; }
+          command -v minikube && echo "OK: minikube binary found" || { echo "ERROR: minikube binary not found"; exit 1; }
+          minikube status && echo "OK: minikube cluster is running" || { echo "ERROR: minikube not running"; exit 1; }
 
       - name: Test kubectl access
         env:
@@ -63,4 +63,4 @@ jobs:
 
           POD_NAME=$(kubectl get pod -l app=nginx -o jsonpath='{.items[0].metadata.name}')
           kubectl exec "$POD_NAME" -- wget -O- http://localhost:80 | grep -q "Welcome to nginx"
-          echo "✓ Workload is functioning correctly"
+          echo "OK: Test workload is functioning correctly"
