@@ -74,6 +74,21 @@ if [ -n "$CONTAINER_RUNTIME" ]; then
   START_ARGS="$START_ARGS --container-runtime=$CONTAINER_RUNTIME"
 fi
 
+# Fix for driver=none with systemd-resolved (causes CoreDNS loop)
+# See: https://coredns.io/plugins/loop/#troubleshooting-loops-in-kubernetes-clusters
+# See: https://github.com/kubernetes/minikube/issues/3511
+if [ "$DRIVER" = "none" ]; then
+  if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+    echo "Detected systemd-resolved, configuring kubelet to use real resolv.conf..."
+    if [ -f /run/systemd/resolve/resolv.conf ]; then
+      START_ARGS="$START_ARGS --extra-config=kubelet.resolv-conf=/run/systemd/resolve/resolv.conf"
+      echo "Added --extra-config=kubelet.resolv-conf=/run/systemd/resolve/resolv.conf"
+    else
+      echo "::warning::systemd-resolved is active but /run/systemd/resolve/resolv.conf not found"
+    fi
+  fi
+fi
+
 # shellcheck disable=SC2086
 minikube $START_ARGS
 
