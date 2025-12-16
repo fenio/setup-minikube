@@ -9,7 +9,7 @@ A GitHub Action for installing and configuring [Minikube](https://minikube.sigs.
 - ✅ Configurable Kubernetes version
 - ✅ Waits for cluster readiness
 - ✅ Outputs kubeconfig path for easy integration
-- ✅ **Simple bash-based implementation** - No Node.js dependencies required
+- ✅ No cleanup required - designed for ephemeral GitHub Actions runners
 
 ## Quick Start
 
@@ -58,14 +58,14 @@ jobs:
 
 ```yaml
 - name: Setup Minikube
-  uses: fenio/setup-minikube@v1
+  uses: fenio/setup-minikube@v5
 ```
 
 ### Specific Kubernetes Version
 
 ```yaml
 - name: Setup Minikube
-  uses: fenio/setup-minikube@v1
+  uses: fenio/setup-minikube@v5
   with:
     kubernetes-version: 'v1.28.0'
 ```
@@ -74,7 +74,7 @@ jobs:
 
 ```yaml
 - name: Setup Minikube
-  uses: fenio/setup-minikube@v1
+  uses: fenio/setup-minikube@v5
   with:
     driver: 'podman'
 ```
@@ -83,7 +83,7 @@ jobs:
 
 ```yaml
 - name: Setup Minikube
-  uses: fenio/setup-minikube@v1
+  uses: fenio/setup-minikube@v5
   with:
     timeout: '600'  # 10 minutes
 ```
@@ -97,16 +97,7 @@ jobs:
 5. Exports the KUBECONFIG environment variable
 6. Optionally waits for the cluster to become fully ready
 
-The cluster remains running after your workflow completes. This works perfectly for:
-- GitHub-hosted runners (fresh VM each time)
-- Self-hosted runners where you want the cluster to persist
-
-If you need cleanup, you can add it explicitly:
-```yaml
-- name: Cleanup
-  if: always()
-  run: minikube delete --all --purge
-```
+**No cleanup needed** - GitHub Actions runners are ephemeral and destroyed after each workflow run, so there's no need to restore system state.
 
 ## Requirements
 
@@ -122,7 +113,7 @@ If the cluster doesn't become ready in time, increase the timeout:
 
 ```yaml
 - name: Setup Minikube
-  uses: fenio/setup-minikube@v1
+  uses: fenio/setup-minikube@v5
   with:
     timeout: '600'  # 10 minutes
 ```
@@ -133,7 +124,7 @@ If you encounter issues with the Docker driver, try using a different driver:
 
 ```yaml
 - name: Setup Minikube
-  uses: fenio/setup-minikube@v1
+  uses: fenio/setup-minikube@v5
   with:
     driver: 'podman'
 ```
@@ -149,6 +140,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Related Projects
 
 - [Minikube](https://minikube.sigs.k8s.io/) - Local Kubernetes environment
+
+### Other Kubernetes Setup Actions
+
+- [setup-k0s](https://github.com/fenio/setup-k0s) - Zero friction Kubernetes (k0s)
 - [setup-k3s](https://github.com/fenio/setup-k3s) - Lightweight Kubernetes (k3s)
 - [setup-kubesolo](https://github.com/fenio/setup-kubesolo) - Ultra-lightweight Kubernetes
-- [setup-k0s](https://github.com/fenio/setup-k0s) - Zero friction Kubernetes (k0s)
+- [setup-microk8s](https://github.com/fenio/setup-microk8s) - Lightweight Kubernetes by Canonical
+- [setup-talos](https://github.com/fenio/setup-talos) - Secure, immutable Kubernetes OS (Talos)
